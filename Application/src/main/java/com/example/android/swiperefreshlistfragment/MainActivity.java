@@ -22,23 +22,45 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 import android.widget.ViewAnimator;
+
 
 import com.example.android.common.activities.SampleActivityBase;
 import com.example.android.common.logger.Log;
 import com.example.android.common.logger.LogFragment;
 import com.example.android.common.logger.LogWrapper;
 import com.example.android.common.logger.MessageOnlyLogFilter;
+import com.squareup.okhttp.Call;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Map;
 import java.util.UUID;
+
+import static java.lang.System.in;
+import static java.lang.System.setOut;
 
 /**
  * A simple launcher activity containing a summary sample description, sample log and a custom
@@ -50,7 +72,11 @@ import java.util.UUID;
 public class MainActivity extends SampleActivityBase {
 
     public static final String TAG = "MainActivity";
-    String respuesta = "";
+    private final OkHttpClient client = new OkHttpClient();
+
+
+    String token = "";
+    public static String respuestaServer;
 
     // Whether the Log Fragment is currently shown
     private boolean mLogShown;
@@ -67,9 +93,11 @@ public class MainActivity extends SampleActivityBase {
             transaction.replace(R.id.sample_content_fragment, fragment);
             transaction.commit();
         }
+
         AccesoRemoto acceso= new AccesoRemoto();
         acceso.execute();
-        System.out.println("respuesta: "+respuesta);
+
+        System.out.println("respuestaServer: "+respuestaServer);
          Log.d("llamadoPrimerRest: ","sdfsdf");
     }
 
@@ -125,42 +153,15 @@ public class MainActivity extends SampleActivityBase {
         Log.i(TAG, "Ready");
     }
 
-    public String llamadoPrimerRest(){
-
-        UUID idOne = UUID.randomUUID();
-        OkHttpClient client = new OkHttpClient();
-
-        MediaType mediaType = MediaType.parse("application/json");
-        RequestBody body = RequestBody.create(mediaType, "\r\n\r\n{\r\n\"user\": {\r\n\"profile\": {\r\n\"language\": \"es\"\r\n}\r\n},\r\n\"device\": {\r\n\"deviceId\": \""+idOne.toString()+"\",\r\n\"name\": \"MyPhone\",\r\n\"version\": \"4.4.4\",\r\n\"width\": \"640\",\r\n\"heigth\": \"960\",\r\n\"model\": \"Awesome Model 6\",\r\n\"platform\": \"android\"\r\n},\r\n\"app\": {\r\n\"version\": \"1.0.0\"\r\n}\r\n}\r\n\r\n");
-        Request request = new Request.Builder()
-                .url("http://fxservicesstaging.nunchee.com/api/1.0/auth/users/login/anonymous")
-                .post(body)
-                .addHeader("content-type", "application/json")
-                .addHeader("authorization", "Basic cHJ1ZWJhc2RldjpwcnVlYmFzZGV2U2VjcmV0")
-                .addHeader("cache-control", "no-cache")
-                .addHeader("postman-token", "b44d8235-f790-a5a0-bfe8-524c5db1ca48")
-                .build();
-        Response response = null;
-        try {
-            response = client.newCall(request).execute();
-            respuesta = response.body().string();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return respuesta;
-    }
 
 
     private class AccesoRemoto extends AsyncTask<Void, Void, String> {
 
         protected String doInBackground(Void... argumentos) {
 
-            StringBuffer bufferCadena = new StringBuffer("");
-
             UUID idOne = UUID.randomUUID();
             OkHttpClient client = new OkHttpClient();
-
+            String respuesta = "";
             MediaType mediaType = MediaType.parse("application/json");
             RequestBody body = RequestBody.create(mediaType, "\r\n\r\n{\r\n\"user\": {\r\n\"profile\": {\r\n\"language\": \"es\"\r\n}\r\n},\r\n\"device\": {\r\n\"deviceId\": \""+idOne.toString()+"\",\r\n\"name\": \"MyPhone\",\r\n\"version\": \"4.4.4\",\r\n\"width\": \"640\",\r\n\"heigth\": \"960\",\r\n\"model\": \"Awesome Model 6\",\r\n\"platform\": \"android\"\r\n},\r\n\"app\": {\r\n\"version\": \"1.0.0\"\r\n}\r\n}\r\n\r\n");
             Request request = new Request.Builder()
@@ -174,45 +175,86 @@ public class MainActivity extends SampleActivityBase {
             Response response = null;
             try {
                 response = client.newCall(request).execute();
-                //respuesta = response.body().string();
+                respuesta = response.body().string();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //lee el resultado
-            BufferedReader entrada = null;
-            try {
-                entrada = new BufferedReader(new InputStreamReader(
-                        response.body().byteStream()));
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
 
-            String separador = "";
-            String NL = System.getProperty("line.separator");
-            //almacena el resultado en bufferCadena
-
-            try {
-                while ((separador = entrada.readLine()) != null) {
-                    bufferCadena.append(separador + NL);
-                }
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-            try {
-                entrada.close();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-
-
-            return bufferCadena.toString();
+            return respuesta;
 
         }
+
+        protected void onPostExecute(String mensaje) {
+            
+            System.out.println("respuesta: "+mensaje);
+            try {
+                JSONObject reader = new JSONObject(mensaje);
+                JSONObject sys  = reader.getJSONObject("data");
+                token = sys.getString("accessToken");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            DatosPartidos datos= new DatosPartidos();
+            datos.execute();
+            System.out.println("token: "+token);
+
+        }
+
+    }
+
+
+    private class DatosPartidos extends AsyncTask<Void, Void, String> {
+
+        protected String doInBackground(Void... argumentos) {
+
+            OkHttpClient client = new OkHttpClient();
+            String respuesta = "";
+            System.out.println("token2: "+token);
+            Request request = new Request.Builder()
+                    .url("http://fxservicesstaging.nunchee.com/api/1.0/sport/events")
+                    .get()
+                    .addHeader("authorization", "Bearer "+token)
+                    .addHeader("cache-control", "no-cache")
+                    .addHeader("postman-token", "fb2c7db2-0c19-1f98-7c6c-eab5ee5d9901")
+                    .build();
+
+            try {
+                Response response = client.newCall(request).execute();
+                respuesta = response.body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return respuesta;
+
+        }
+
         protected void onPostExecute(String mensaje) {
 
-             respuesta = mensaje;
-            //Toast.makeText(MainActivity.this, mensaje, Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, mensaje, Toast.LENGTH_SHORT).show();
+            System.out.println("DatosPartidos: "+mensaje);
+
+//            try {
+//                JSONObject reader = new JSONObject(mensaje);
+//                JSONObject sys  = reader.getJSONObject("data");
+//                token = sys.getString("accessToken");
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//            System.out.println("token: "+token);
 
         }
+
     }
+
+
+
+
+
+
+
+
+
+
+
 }
