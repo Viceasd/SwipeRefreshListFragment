@@ -18,6 +18,8 @@ package com.example.android.swiperefreshlistfragment;
 
 import com.example.android.common.dummydata.Cheeses;
 import com.example.android.common.logger.Log;
+import com.example.android.model.Data;
+import com.google.gson.Gson;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,6 +31,14 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -65,6 +75,17 @@ public class SwipeRefreshListFragmentFragment extends SwipeRefreshListFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        String mensaje = getArguments().getString("mensajeServidor");
+        Data evento = new Data();
+        try {
+            JSONObject reader = new JSONObject(mensaje);
+            Gson gson=new Gson();
+            evento = gson.fromJson(reader.getJSONObject("data").toString(), Data.class);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
         /**
          * Create an ArrayAdapter to contain the data for the ListView. Each item in the ListView
          * uses the system-defined simple_list_item_1 layout that contains one TextView.
@@ -73,7 +94,8 @@ public class SwipeRefreshListFragmentFragment extends SwipeRefreshListFragment {
                 getActivity(),
                 android.R.layout.simple_list_item_1,
                 android.R.id.text1,
-                Cheeses.randomList(LIST_ITEM_COUNT));
+                datosEventos(evento));
+               // Cheeses.randomList(LIST_ITEM_COUNT));
 
         // Set the adapter between the ListView and its backing data.
         setListAdapter(adapter);
@@ -87,22 +109,19 @@ public class SwipeRefreshListFragmentFragment extends SwipeRefreshListFragment {
          * refreshes the content. Call the same method in response to the Refresh action from the
          * action bar.
          */
-        setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                Log.i(LOG_TAG, "onRefresh called from SwipeRefreshLayout");
-
-                initiateRefresh();
-            }
-        });
+//        setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                Log.i(LOG_TAG, "onRefresh called from SwipeRefreshLayout");
+//
+//                initiateRefresh();
+//            }
+//        });
         // END_INCLUDE (setup_refreshlistener)
     }
     // END_INCLUDE (setup_views)
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.main_menu, menu);
-    }
+
 
     // BEGIN_INCLUDE (setup_refresh_menu_listener)
     /**
@@ -114,54 +133,7 @@ public class SwipeRefreshListFragmentFragment extends SwipeRefreshListFragment {
      * it just to demonstrate the use of color. Instead you should choose a color scheme based
      * off of your application's branding.
      */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_refresh:
-                Log.i(LOG_TAG, "Refresh menu item selected");
 
-                // We make sure that the SwipeRefreshLayout is displaying it's refreshing indicator
-                if (!isRefreshing()) {
-                    setRefreshing(true);
-                }
-
-                // Start our refresh background task
-                initiateRefresh();
-                return true;
-
-            case R.id.menu_color_scheme_1:
-                Log.i(LOG_TAG, "setColorScheme #1");
-                item.setChecked(true);
-
-                // Change the colors displayed by the SwipeRefreshLayout by providing it with 4
-                // color resource ids
-                setColorScheme(R.color.color_scheme_1_1, R.color.color_scheme_1_2,
-                        R.color.color_scheme_1_3, R.color.color_scheme_1_4);
-                return true;
-
-            case R.id.menu_color_scheme_2:
-                Log.i(LOG_TAG, "setColorScheme #2");
-                item.setChecked(true);
-
-                // Change the colors displayed by the SwipeRefreshLayout by providing it with 4
-                // color resource ids
-                setColorScheme(R.color.color_scheme_2_1, R.color.color_scheme_2_2,
-                        R.color.color_scheme_2_3, R.color.color_scheme_2_4);
-                return true;
-
-            case R.id.menu_color_scheme_3:
-                Log.i(LOG_TAG, "setColorScheme #3");
-                item.setChecked(true);
-
-                // Change the colors displayed by the SwipeRefreshLayout by providing it with 4
-                // color resource ids
-                setColorScheme(R.color.color_scheme_3_1, R.color.color_scheme_3_2,
-                        R.color.color_scheme_3_3, R.color.color_scheme_3_4);
-                return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
     // END_INCLUDE (setup_refresh_menu_listener)
 
     // BEGIN_INCLUDE (initiate_refresh)
@@ -169,14 +141,7 @@ public class SwipeRefreshListFragmentFragment extends SwipeRefreshListFragment {
      * By abstracting the refresh process to a single method, the app allows both the
      * SwipeGestureLayout onRefresh() method and the Refresh action item to refresh the content.
      */
-    private void initiateRefresh() {
-        Log.i(LOG_TAG, "initiateRefresh");
 
-        /**
-         * Execute the background task, which uses {@link android.os.AsyncTask} to load the data.
-         */
-        new DummyBackgroundTask().execute();
-    }
     // END_INCLUDE (initiate_refresh)
 
     // BEGIN_INCLUDE (refresh_complete)
@@ -184,49 +149,46 @@ public class SwipeRefreshListFragmentFragment extends SwipeRefreshListFragment {
      * When the AsyncTask finishes, it calls onRefreshComplete(), which updates the data in the
      * ListAdapter and turns off the progress bar.
      */
-    private void onRefreshComplete(List<String> result) {
-        Log.i(LOG_TAG, "onRefreshComplete");
 
-        // Remove all items from the ListAdapter, and then replace them with the new items
-        ArrayAdapter<String> adapter = (ArrayAdapter<String>) getListAdapter();
-        adapter.clear();
-        for (String cheese : result) {
-            adapter.add(cheese);
-        }
-
-        // Stop the refreshing indicator
-        setRefreshing(false);
-    }
     // END_INCLUDE (refresh_complete)
 
     /**
      * Dummy {@link AsyncTask} which simulates a long running task to fetch new cheeses.
      */
-    private class DummyBackgroundTask extends AsyncTask<Void, Void, List<String>> {
+    public static ArrayList<String> datosEventos(Data evento) {
+        HashSet<String> items = new HashSet<String>();
+        String homeName = "";
+        String awayName = "";
+        int homeScore = 0;
+        int awayScore = 0;
+        String estatusEvento = "";
+        String diaFecha = "";
+        String newDate = "";
 
-        static final int TASK_DURATION = 3 * 1000; // 3 seconds
+        for(int i = 0; evento.getItems().size() > i; i++ ){
+            homeName =  evento.getItems().get(i).getHomeTeam().getName();
+            awayName =  evento.getItems().get(i).getAwayTeam().getName();
+            homeScore = evento.getItems().get(i).getHomeScore();
+            awayScore = evento.getItems().get(i).getAwayScore();
+            estatusEvento = evento.getItems().get(i).getEventStatus().getName().getEs();
+            diaFecha = evento.getItems().get(i).getMatchDay().getStart();
 
-        @Override
-        protected List<String> doInBackground(Void... params) {
-            // Sleep for a small amount of time to simulate a background-task
+
+            SimpleDateFormat sd1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");  //2017-06-18T23:59:59Z
+
             try {
-                Thread.sleep(TASK_DURATION);
-            } catch (InterruptedException e) {
+                Date dt = sd1.parse(diaFecha);
+                SimpleDateFormat sd2 = new SimpleDateFormat("dd-MM-yyyy hh:mm");
+                newDate = sd2.format(dt);
+
+            } catch (ParseException e) {
                 e.printStackTrace();
             }
-
-            // Return a new random list of cheeses
-            return Cheeses.randomList(LIST_ITEM_COUNT);
+            items.add(homeName +" Vs "+awayName+" "+String.valueOf(homeScore)+" "+String.valueOf(awayScore)+" "+estatusEvento+" "+newDate );
         }
 
-        @Override
-        protected void onPostExecute(List<String> result) {
-            super.onPostExecute(result);
-
-            // Tell the Fragment that the refresh has completed
-            onRefreshComplete(result);
-        }
-
+        return new ArrayList<String>(items);
     }
+
 
 }

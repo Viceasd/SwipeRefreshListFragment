@@ -44,17 +44,17 @@ public class SwipeRefreshListFragment extends ListFragment {
 
         // Now create a SwipeRefreshLayout to wrap the fragment's content view
         mSwipeRefreshLayout = new ListFragmentSwipeRefreshLayout(container.getContext());
-
+        listFragmentView.setBackgroundColor(12);
         // Add the list fragment's content view to the SwipeRefreshLayout, making sure that it fills
         // the SwipeRefreshLayout
         mSwipeRefreshLayout.addView(listFragmentView,
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 
         // Make sure that the SwipeRefreshLayout will fill the fragment
-        mSwipeRefreshLayout.setLayoutParams(
-                new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT));
+//        mSwipeRefreshLayout.setLayoutParams(
+//                new ViewGroup.LayoutParams(
+//                        ViewGroup.LayoutParams.MATCH_PARENT,
+//                        ViewGroup.LayoutParams.MATCH_PARENT));
 
         // Now return the SwipeRefreshLayout as this fragment's content view
         return mSwipeRefreshLayout;
@@ -93,7 +93,7 @@ public class SwipeRefreshListFragment extends ListFragment {
     /**
      * Set the color scheme for the {@link android.support.v4.widget.SwipeRefreshLayout}.
      *
-     * @see android.support.v4.widget.SwipeRefreshLayout#setColorScheme(int, int, int, int)
+     * android.support.v4.widget.SwipeRefreshLayoutsetColorScheme(int, int, int, int)
      */
     public void setColorScheme(int colorRes1, int colorRes2, int colorRes3, int colorRes4) {
         mSwipeRefreshLayout.setColorScheme(colorRes1, colorRes2, colorRes3, colorRes4);

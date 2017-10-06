@@ -24,43 +24,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 import android.widget.ViewAnimator;
-
-
 import com.example.android.common.activities.SampleActivityBase;
 import com.example.android.common.logger.Log;
 import com.example.android.common.logger.LogFragment;
 import com.example.android.common.logger.LogWrapper;
 import com.example.android.common.logger.MessageOnlyLogFilter;
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.Headers;
+import com.example.android.model.Data;
+import com.example.android.model.Evento;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.ResponseBody;
-
-
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Map;
 import java.util.UUID;
 
-import static java.lang.System.in;
-import static java.lang.System.setOut;
 
 /**
  * A simple launcher activity containing a summary sample description, sample log and a custom
@@ -88,70 +70,16 @@ public class MainActivity extends SampleActivityBase {
 
         Log.d("llamadoPrimerRest: ","sdfsdf");
         if (savedInstanceState == null) {
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            SwipeRefreshListFragmentFragment fragment = new SwipeRefreshListFragmentFragment();
-            transaction.replace(R.id.sample_content_fragment, fragment);
-            transaction.commit();
         }
-
         AccesoRemoto acceso= new AccesoRemoto();
         acceso.execute();
 
-        System.out.println("respuestaServer: "+respuestaServer);
-         Log.d("llamadoPrimerRest: ","sdfsdf");
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        MenuItem logToggle = menu.findItem(R.id.menu_toggle_log);
-        logToggle.setVisible(findViewById(R.id.sample_output) instanceof ViewAnimator);
-        logToggle.setTitle(mLogShown ? R.string.sample_hide_log : R.string.sample_show_log);
-
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            case R.id.menu_toggle_log:
-                mLogShown = !mLogShown;
-                ViewAnimator output = (ViewAnimator) findViewById(R.id.sample_output);
-                if (mLogShown) {
-                    output.setDisplayedChild(1);
-                } else {
-                    output.setDisplayedChild(0);
-                }
-                supportInvalidateOptionsMenu();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     /** Create a chain of targets that will receive log data */
-    @Override
-    public void initializeLogging() {
-        // Wraps Android's native log framework.
-        LogWrapper logWrapper = new LogWrapper();
-        // Using Log, front-end to the logging chain, emulates android.util.log method signatures.
-        Log.setLogNode(logWrapper);
 
-        // Filter strips out everything except the message text.
-        MessageOnlyLogFilter msgFilter = new MessageOnlyLogFilter();
-        logWrapper.setNext(msgFilter);
-
-        // On screen logging via a fragment with a TextView.
-        LogFragment logFragment = (LogFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.log_fragment);
-        msgFilter.setNext(logFragment.getLogView());
-
-        Log.i(TAG, "Ready");
-    }
 
 
 
@@ -185,8 +113,8 @@ public class MainActivity extends SampleActivityBase {
         }
 
         protected void onPostExecute(String mensaje) {
-            
-            System.out.println("respuesta: "+mensaje);
+
+
             try {
                 JSONObject reader = new JSONObject(mensaje);
                 JSONObject sys  = reader.getJSONObject("data");
@@ -196,7 +124,7 @@ public class MainActivity extends SampleActivityBase {
             }
             DatosPartidos datos= new DatosPartidos();
             datos.execute();
-            System.out.println("token: "+token);
+
 
         }
 
@@ -231,30 +159,21 @@ public class MainActivity extends SampleActivityBase {
 
         protected void onPostExecute(String mensaje) {
 
-            Toast.makeText(MainActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-            System.out.println("DatosPartidos: "+mensaje);
 
-//            try {
-//                JSONObject reader = new JSONObject(mensaje);
-//                JSONObject sys  = reader.getJSONObject("data");
-//                token = sys.getString("accessToken");
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//            System.out.println("token: "+token);
+
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            SwipeRefreshListFragmentFragment fragment = new SwipeRefreshListFragmentFragment();
+
+            Bundle bundle = new Bundle();
+            bundle.putString("mensajeServidor", mensaje);
+             // set Fragmentclass Arguments
+
+            fragment.setArguments(bundle);
+            transaction.replace(R.id.sample_content_fragment, fragment);
+            transaction.commit();
 
         }
 
     }
-
-
-
-
-
-
-
-
-
-
 
 }
